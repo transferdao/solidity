@@ -302,6 +302,10 @@ public:
 	static std::string revertReasonIfDebug(RevertStrings revertStrings, std::string const& _message = "");
 
 	std::string revertReasonIfDebug(std::string const& _message = "");
+
+	/// @returns helper function that tries to decode the error message from a "structured" revert() instruction.
+	std::string tryDecodeErrorMessageFunction();
+
 private:
 	/// Special case of conversionFunction - handles everything that does not
 	/// use exactly one variable to hold the value.

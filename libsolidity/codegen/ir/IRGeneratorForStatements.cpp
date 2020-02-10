@@ -41,6 +41,7 @@
 #include <libsolutil/Keccak256.h>
 #include <libsolutil/Visitor.h>
 
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
 using namespace std;
@@ -1230,30 +1231,17 @@ bool IRGeneratorForStatements::visit(Literal const& _literal)
 	return false;
 }
 
-void IRGeneratorForStatements::appendExternalFunctionCall(
-	FunctionCall const& _functionCall,
-	vector<ASTPointer<Expression const>> const& _arguments
-)
+IRGeneratorForStatements::ReturnInfo IRGeneratorForStatements::collectReturnInfo(FunctionCall const& _functionCall)
 {
 	FunctionType const& funType = dynamic_cast<FunctionType const&>(type(_functionCall.expression()));
-	solAssert(
-		funType.takesArbitraryParameters() ||
-		_arguments.size() == funType.parameterTypes().size(), ""
-	);
-	solUnimplementedAssert(!funType.bound(), "");
-	FunctionType::Kind funKind = funType.kind();
+	FunctionType::Kind const funKind = funType.kind();
+	bool const returnSuccessConditionAndReturndata = funKind == FunctionType::Kind::BareCall || funKind == FunctionType::Kind::BareDelegateCall || funKind == FunctionType::Kind::BareStaticCall;
+	bool const haveReturndatacopy = m_context.evmVersion().supportsReturndata();
 
-	solAssert(funKind != FunctionType::Kind::BareStaticCall || m_context.evmVersion().hasStaticCall(), "");
-	solAssert(funKind != FunctionType::Kind::BareCallCode, "Callcode has been removed.");
-
-	bool returnSuccessConditionAndReturndata = funKind == FunctionType::Kind::BareCall || funKind == FunctionType::Kind::BareDelegateCall || funKind == FunctionType::Kind::BareStaticCall;
-	bool isDelegateCall = funKind == FunctionType::Kind::BareDelegateCall || funKind == FunctionType::Kind::DelegateCall;
-	bool useStaticCall = funKind == FunctionType::Kind::BareStaticCall || (funType.stateMutability() <= StateMutability::View && m_context.evmVersion().hasStaticCall());
-
-	bool haveReturndatacopy = m_context.evmVersion().supportsReturndata();
-	unsigned estimatedReturnSize = 0;
+	TypePointers returnTypes{};
 	bool dynamicReturnSize = false;
-	TypePointers returnTypes;
+	unsigned estimatedReturnSize = 0;
+
 	if (!returnSuccessConditionAndReturndata)
 	{
 		if (haveReturndatacopy)
@@ -1275,6 +1263,37 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 				estimatedReturnSize += retType->calldataEncodedSize();
 	}
 
+	return ReturnInfo{
+		_functionCall,
+		m_context.newYulVariable(),
+		move(returnTypes),
+		dynamicReturnSize,
+		estimatedReturnSize
+	};
+}
+
+void IRGeneratorForStatements::appendExternalFunctionCall(
+	FunctionCall const& _functionCall,
+	vector<ASTPointer<Expression const>> const& _arguments
+)
+{
+	FunctionType const& funType = dynamic_cast<FunctionType const&>(type(_functionCall.expression()));
+	solAssert(
+		funType.takesArbitraryParameters() ||
+		_arguments.size() == funType.parameterTypes().size(), ""
+	);
+	solUnimplementedAssert(!funType.bound(), "");
+	FunctionType::Kind funKind = funType.kind();
+
+	solAssert(funKind != FunctionType::Kind::BareStaticCall || m_context.evmVersion().hasStaticCall(), "");
+	solAssert(funKind != FunctionType::Kind::BareCallCode, "Callcode has been removed.");
+
+	bool returnSuccessConditionAndReturndata = funKind == FunctionType::Kind::BareCall || funKind == FunctionType::Kind::BareDelegateCall || funKind == FunctionType::Kind::BareStaticCall;
+	bool isDelegateCall = funKind == FunctionType::Kind::BareDelegateCall || funKind == FunctionType::Kind::DelegateCall;
+	bool useStaticCall = funKind == FunctionType::Kind::BareStaticCall || (funType.stateMutability() <= StateMutability::View && m_context.evmVersion().hasStaticCall());
+
+	m_returnInfo.emplace(collectReturnInfo(_functionCall));
+
 	TypePointers argumentTypes;
 	vector<string> argumentStrings;
 	for (auto const& arg: _arguments)
@@ -1292,8 +1311,8 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 		// (which we would have to subtract from the gas left)
 		// We could also just use MLOAD; POP right before the gas calculation, but the optimizer
 		// would remove that, so we use MSTORE here.
-		if (!funType.gasSet() && estimatedReturnSize > 0)
-			m_code << "mstore(add(" << freeMemory() << ", " << to_string(estimatedReturnSize) << "), 0)\n";
+		if (!funType.gasSet() && m_returnInfo->estimatedReturnSize > 0)
+			m_code << "mstore(add(" << freeMemory() << ", " << to_string(m_returnInfo->estimatedReturnSize) << "), 0)\n";
 	}
 
 	ABIFunctions abi(m_context.evmVersion(), m_context.revertStrings(), m_context.functionCollector());
@@ -1304,29 +1323,31 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 			if iszero(extcodesize(<address>)) { revert(0, 0) }
 		</checkExistence>
 
+		// storage for returned data
 		let <pos> := <freeMemory>
-
 		mstore(<pos>, <shl28>(<funId>))
 		let <end> := <encodeArgs>(add(<pos>, 4) <argumentString>)
 
 		let <result> := <call>(<gas>, <address>, <?hasValue> <value>, </hasValue> <pos>, sub(<end>, <pos>), <pos>, <reservedReturnSize>)
-		if iszero(<result>) { <forwardingRevert>() }
-
-		<?dynamicReturnSize>
-			returndatacopy(<pos>, 0, returndatasize())
-		</dynamicReturnSize>
-
-		mstore(<freeMemoryPointer>, add(<pos>, and(add(<returnSize>, 0x1f), not(0x1f))))
-		<?returns> let <retVars> := </returns> <abiDecode>(<pos>, add(<pos>, <returnSize>))
+		<?isTryCall>
+			let <trySuccessConditionVariable> := <result>
+		<!isTryCall>
+			if iszero(<result>) { <forwardingRevert>() }
+			<decodeReturnParameters>
+		</isTryCall>
 	)");
-	templ("pos", m_context.newYulVariable());
+	templ("pos", m_returnInfo->returndataVariable);
 	templ("end", m_context.newYulVariable());
 	templ("result", m_context.newYulVariable());
 	templ("freeMemory", freeMemory());
-	templ("freeMemoryPointer", to_string(CompilerUtils::freeMemoryPointer));
 	templ("shl28", m_utils.shiftLeftFunction(8 * (32 - 4)));
 	templ("funId", IRVariable(_functionCall.expression()).part("functionIdentifier").name());
 	templ("address", IRVariable(_functionCall.expression()).part("address").name());
+	templ("decodeReturnParameters", decodeReturnParameters());
+
+	templ("isTryCall", _functionCall.annotation().tryCall);
+	if (_functionCall.annotation().tryCall)
+		templ("trySuccessConditionVariable", m_context.trySuccessConditionVariable(_functionCall));
 
 	// If the function takes arbitrary parameters or is a bare call, copy dynamic length data in place.
 	// Move arguments to memory, will not update the free memory pointer (but will update the memory
@@ -1386,18 +1407,18 @@ void IRGeneratorForStatements::appendExternalFunctionCall(
 	solUnimplementedAssert(funKind != FunctionType::Kind::RIPEMD160, "");
 	solUnimplementedAssert(funKind != FunctionType::Kind::ECRecover, "");
 
-	templ("dynamicReturnSize", dynamicReturnSize);
+	templ("dynamicReturnSize", m_returnInfo->dynamicReturnSize);
 	// Always use the actual return length, and not our calculated expected length, if returndatacopy is supported.
 	// This ensures it can catch badly formatted input from external calls.
-	if (haveReturndatacopy)
+	if (m_context.evmVersion().supportsReturndata())
 		templ("returnSize", "returndatasize()");
 	else
-		templ("returnSize", to_string(estimatedReturnSize));
+		templ("returnSize", to_string(m_returnInfo->estimatedReturnSize));
 
-	templ("reservedReturnSize", dynamicReturnSize ? "0" : to_string(estimatedReturnSize));
+	templ("reservedReturnSize", m_returnInfo->dynamicReturnSize ? "0" : to_string(m_returnInfo->estimatedReturnSize));
 
-	templ("abiDecode", abi.tupleDecoder(returnTypes, true));
-	templ("returns", !returnTypes.empty());
+	templ("abiDecode", abi.tupleDecoder(m_returnInfo->returnTypes, true));
+	templ("returns", !m_returnInfo->returnTypes.empty());
 	templ("retVars", IRVariable(_functionCall).commaSeparatedList());
 
 	m_code << templ.render();
@@ -1719,3 +1740,190 @@ Type const& IRGeneratorForStatements::type(Expression const& _expression)
 	solAssert(_expression.annotation().type, "Type of expression not set.");
 	return *_expression.annotation().type;
 }
+
+bool IRGeneratorForStatements::visit(TryStatement const& _tryStatement)
+{
+	optional<ReturnInfo> outerReturnInfo(std::move(m_returnInfo));
+	ScopeGuard _leaveGuard = ScopeGuard([&]() { m_returnInfo.swap(outerReturnInfo); });
+
+	m_returnInfo.reset();
+	_tryStatement.externalCall().accept(*this);
+	solAssert(m_returnInfo.has_value(), "");
+
+	auto const trySuccessCondition = m_context.trySuccessConditionVariable(_tryStatement.externalCall());
+
+	m_code << "switch iszero(" << trySuccessCondition << ")\n";
+
+	m_code << "case 0 { // success case\n";
+	TryCatchClause const& successClause = *_tryStatement.clauses().front();
+	decodeTryCallReturnParameters(successClause);
+	m_returnInfo.reset();
+	successClause.block().accept(*this);
+	m_code << "}\n";
+
+	m_code << "default { // failure case\n";
+	handleCatch(_tryStatement);
+	m_code << "}\n";
+
+	return false;
+}
+
+string IRGeneratorForStatements::decodeReturnParameters()
+{
+	ABIFunctions abi(m_context.evmVersion(), m_context.revertStrings(), m_context.functionCollector());
+
+	return Whiskers(R"(
+		<?dynamicReturnSize>
+			// copy dynamic return data out
+			returndatacopy(<pos>, 0, returndatasize())
+		</dynamicReturnSize>
+
+		// update freeMemoryPointer according to dynamic return size
+		mstore(<freeMemoryPointer>, add(<pos>, and(add(<returnSize>, 0x1f), not(0x1f))))
+
+		// decode return parameters from external try-call into <retVars>
+		let <retVars> := <abiDecode>(<pos>, add(<pos>, <returnSize>))
+	)")
+	("retVars", IRVariable(m_returnInfo->functionCall).commaSeparatedList())
+	("pos", m_returnInfo->returndataVariable)
+	("abiDecode", abi.tupleDecoder(m_returnInfo->returnTypes, true))
+	("freeMemoryPointer", to_string(CompilerUtils::freeMemoryPointer))
+	("dynamicReturnSize", m_returnInfo->dynamicReturnSize)
+	("returnSize",
+		m_context.evmVersion().supportsReturndata()
+			? "returndatasize()"s
+			: to_string(m_returnInfo->estimatedReturnSize)
+	).render();
+}
+
+void IRGeneratorForStatements::decodeTryCallReturnParameters(TryCatchClause const& _successClause)
+{
+	solAssert(m_returnInfo.has_value(), "");
+	if (!_successClause.parameters())
+		return;
+
+	m_code << decodeReturnParameters();
+
+	if (_successClause.parameters()->parameters().size() > 1)
+	{
+		size_t i = 0;
+		for (ASTPointer<VariableDeclaration> const& varDecl: _successClause.parameters()->parameters())
+		{
+			solAssert(varDecl, "");
+			define(
+				m_context.addLocalVariable(*varDecl),
+				IRVariable(m_returnInfo->functionCall).tupleComponent(i++)
+			);
+		}
+	}
+	else
+	{
+		define(
+			m_context.addLocalVariable(*_successClause.parameters()->parameters().front()),
+			IRVariable(m_returnInfo->functionCall)
+		);
+	}
+}
+
+void IRGeneratorForStatements::handleCatch(TryStatement const& _tryStatement)
+{
+	if (auto structured = _tryStatement.structuredClause(); structured)
+		handleCatchStructured(*structured, _tryStatement.fallbackClause().get());
+	else if (auto fallback = _tryStatement.fallbackClause(); fallback)
+		handleCatchFallback(*fallback);
+	else
+		m_code << rethrowCode();
+}
+
+void IRGeneratorForStatements::handleCatchStructured(TryCatchClause const& _structured, TryCatchClause const* _fallback)
+{
+	solAssert(
+		_structured.parameters() &&
+		_structured.parameters()->parameters().size() == 1 &&
+		_structured.parameters()->parameters().front() &&
+		*_structured.parameters()->parameters().front()->annotation().type == *TypeProvider::stringMemory(),
+		""
+	);
+	solAssert(m_context.evmVersion().supportsReturndata(), "");
+
+	// Try to decode the error message.
+	// If this fails, leaves 0 on the stack, otherwise the pointer to the data string.
+	string const dataVariable = m_context.newYulVariable();
+
+	m_code << "let " << dataVariable << " := " << m_utils.tryDecodeErrorMessageFunction() << "()\n";
+	m_code << "switch iszero(" << dataVariable << ") \n";
+	m_code << "case 0 { // decoding success\n";
+	if (_structured.parameters())
+	{
+		solAssert(_structured.parameters()->parameters().size() == 1, "");
+		IRVariable const& var = m_context.addLocalVariable(*_structured.parameters()->parameters().front());
+		declare(var);
+		m_code << var.commaSeparatedList() << " := " << dataVariable << "\n";
+	}
+	_structured.accept(*this);
+	m_code << "}\n";
+	m_code << "default { // decoding failure\n";
+	if (_fallback)
+		handleCatchFallback(*_fallback);
+	else
+		m_code << rethrowCode();
+	m_code << "}\n";
+}
+
+void IRGeneratorForStatements::handleCatchFallback(TryCatchClause const& _fallback)
+{
+	if (_fallback.parameters())
+	{
+		solAssert(m_context.evmVersion().supportsReturndata(), "");
+		solAssert(
+			_fallback.parameters()->parameters().size() == 1 &&
+			_fallback.parameters()->parameters().front() &&
+			*_fallback.parameters()->parameters().front()->annotation().type == *TypeProvider::bytesMemory(),
+			""
+		);
+		VariableDeclaration const& paramDecl = *_fallback.parameters()->parameters().front();
+		IRVariable const& parameterVariable = m_context.addLocalVariable(paramDecl);
+		string const parameterVariableName = parameterVariable.commaSeparatedList();
+		if (!m_context.evmVersion().supportsReturndata())
+			m_code << "let " << parameterVariableName << " := " << CompilerUtils::zeroPointer;
+		else
+			m_code << Whiskers(R"(
+				let <v> := returndatasize()
+				switch <v>
+				case 0 {
+					<v> := 0x60
+				}
+				default {
+					// TODO: allocate via allocateMemoryArrayFunction(...)
+					// allocate some memory into <v> of size returndatasize() + PADDING
+					<v> := mload(0x40)
+					mstore(0x40, add(<v>, and(add(returndatasize(), 0x3f), not(0x1f))))
+					// store array length into the front
+					mstore(<v>, returndatasize())
+					// append returndata
+					returndatacopy(add(<v>, 0x20), 0, returndatasize())
+				}
+			)")
+			("v", parameterVariableName)
+			.render();
+	}
+	_fallback.accept(*this);
+}
+
+string IRGeneratorForStatements::rethrowCode() const
+{
+	if (m_context.evmVersion().supportsReturndata())
+		return R"(
+			returndatacopy(0, 0, returndatasize())
+			revert(0, returndatasize())
+		)"s;
+	else
+		return "revert(0, 0) // rethrow\n"s;
+}
+
+bool IRGeneratorForStatements::visit(TryCatchClause const& _clause)
+{
+	_clause.block().accept(*this);
+	return false;
+}
+

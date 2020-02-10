@@ -2130,3 +2130,48 @@ string YulUtilFunctions::revertReasonIfDebug(string const& _message)
 {
 	return revertReasonIfDebug(m_revertStrings, _message);
 }
+
+std::string YulUtilFunctions::tryDecodeErrorMessageFunction()
+{
+	string const functionName = "try_decode_error_message";
+
+	return m_functionCollector.createFunction(functionName, [&]() {
+		string const errorHash = FixedHash<4>(util::keccak256("Error(string)")).hex();
+		return util::Whiskers(R"(
+			function <functionName>() -> data {
+				data := mload(0x40)
+				mstore(data, 0)
+				for {} 1 {} {
+					if lt(returndatasize(), 0x44) { data := 0 break }
+					returndatacopy(0, 0, 4)
+					let sig := <getSig>
+					if iszero(eq(sig, 0x<ErrorSignature>)) { data := 0 break }
+					returndatacopy(data, 4, sub(returndatasize(), 4))
+					let offset := mload(data)
+					if or(
+						gt(offset, 0xffffffffffffffff),
+						gt(add(offset, 0x24), returndatasize())
+					) {
+						data := 0
+						break
+					}
+					let msg := add(data, offset)
+					let length := mload(msg)
+					if gt(length, 0xffffffffffffffff) { data := 0 break }
+					let end := add(add(msg, 0x20), length)
+					if gt(end, add(data, returndatasize())) { data := 0 break }
+					mstore(0x40, and(add(end, 0x1f), not(0x1f)))
+					data := msg
+					break
+				}
+			}
+		)")
+		("ErrorSignature", errorHash)
+		("functionName", functionName)
+		("getSig",
+			m_evmVersion.hasBitwiseShifting() ?
+			"shr(224, mload(0))" :
+			"div(mload(0), " + (u256(1) << 224).str() + ")"
+		).render();
+	});
+}

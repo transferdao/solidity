@@ -24,6 +24,8 @@
 #include <libsolidity/codegen/ir/IRLValue.h>
 #include <libsolidity/codegen/ir/IRVariable.h>
 
+#include <functional>
+
 namespace solidity::frontend
 {
 
@@ -68,7 +70,46 @@ public:
 	void endVisit(Identifier const& _identifier) override;
 	bool visit(Literal const& _literal) override;
 
+	bool visit(TryStatement const& _tryStatement) override;
+	bool visit(TryCatchClause const& _tryCatchClause) override;
+
 private:
+	/// Holds a set of properties of an external function call's return values.
+	struct ReturnInfo
+	{
+		/// Related function call this ReturnInfo was generated from.
+		std::reference_wrapper<FunctionCall const> functionCall;
+
+		/// yul variable name of the return data for the given function call.
+		std::string returndataVariable;
+
+		/// Vector of TypePointer, for each return variable.
+		TypePointers returnTypes = {};
+
+		/// Boolean, indicating whether or not return size is only known at runtime.
+		bool dynamicReturnSize = false;
+
+		/// Contains the at compile time estimated return size.
+		unsigned estimatedReturnSize = 0;
+	};
+
+	/// Assembles some information about the return types and related.
+	[[nodiscard]] ReturnInfo collectReturnInfo(FunctionCall const& _functionCall);
+
+	/// @returns some Yul code to decode the return parameters of the current call.
+	std::string decodeReturnParameters();
+
+	/// Handles all catch cases of a try statement, except the success-case.
+	void handleCatch(TryStatement const& _tryStatement);
+	void handleCatchStructured(TryCatchClause const& _structured, TryCatchClause const* _fallback);
+	void handleCatchFallback(TryCatchClause const& _fallback);
+
+	/// Generates code to rethrow an exception.
+	std::string rethrowCode() const;
+
+	/// Generates the code for decoding the return parameters in a try call.
+	void decodeTryCallReturnParameters(TryCatchClause const& _successClause);
+
 	/// Appends code to call an external function with the given arguments.
 	/// All involved expressions have already been visited.
 	void appendExternalFunctionCall(
@@ -133,6 +174,9 @@ private:
 	IRGenerationContext& m_context;
 	YulUtilFunctions& m_utils;
 	std::optional<IRLValue> m_currentLValue;
+
+	/// Contains some variables to remember during function calls (especially with regards to try-catch)
+	std::optional<ReturnInfo> m_returnInfo;
 };
 
 }
