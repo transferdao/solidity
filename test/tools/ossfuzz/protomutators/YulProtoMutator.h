@@ -6,6 +6,8 @@
 
 #include <src/libfuzzer/libfuzzer_macro.h>
 
+#include <random>
+
 namespace solidity::yul::test::yul_fuzzer
 {
 
@@ -41,18 +43,35 @@ public:
 	ProtobufMessage* m_protobufMsg;
 };
 
+struct YulRandomNumGenerator
+{
+	using RandomEngine = std::minstd_rand;
+
+	explicit YulRandomNumGenerator(unsigned _seed): m_random(RandomEngine(_seed)) {}
+
+	unsigned random()
+	{
+		return m_random();
+	}
+
+	RandomEngine m_random;
+};
+
+template <typename Proto>
+using CustomFuzzMutator = std::function<void(Proto*, YulRandomNumGenerator& _rand)>;
+
 struct YulProtoMutator
 {
 	enum class PrintChanges { Yes, No };
 
 	template <typename T>
 	static void functionWrapper(
-		FuzzMutatorCallback<T> const& _callback,
+		CustomFuzzMutator<T> const& _callback,
 		T* _message,
 		unsigned int _seed,
 		unsigned _period,
 		std::string const& _info,
-		PrintChanges _printChanges = PrintChanges::Yes
+		PrintChanges _printChanges = PrintChanges::No
 	);
 
 	/// Return an integer literal of the given value.
@@ -71,19 +90,19 @@ struct YulProtoMutator
 	/// Return a reference expression
 	/// @param _seed: Pseudo-random unsigned integer used as index
 	/// of variable to be referenced
-	static Expression* refExpression(unsigned _seed);
+	static Expression* refExpression(YulRandomNumGenerator& _rand);
 
 	/// Return a load expression from location zero
 	/// @param _seed: Pseudo-random unsigned integer used to create
 	/// type of load i.e., memory, storage, or calldata.
-	static Expression* loadExpression(unsigned _seed);
+	static Expression* loadExpression(YulRandomNumGenerator& _rand);
 
-	static Expression* loadFromZero(unsigned _seed);
+	static Expression* loadFromZero(YulRandomNumGenerator& _rand);
 
 	/// Configure function call from a pseudo-random seed.
 	/// @param _call: Pre-allocated FunctionCall protobuf message
 	/// @param _seed: Pseudo-random unsigned integer
-	static void configureCall(FunctionCall *_call, unsigned _seed);
+	static void configureCall(FunctionCall *_call, YulRandomNumGenerator& _rand);
 
 	/// Configure function call arguments.
 	/// @param _callType: Enum stating type of function call
@@ -93,7 +112,7 @@ struct YulProtoMutator
 	static void configureCallArgs(
 		FunctionCall_Returns _callType,
 		FunctionCall *_call,
-		unsigned _seed
+		YulRandomNumGenerator& _rand
 	);
 
 	/// Clear protobuf expression
@@ -102,7 +121,11 @@ struct YulProtoMutator
 
 	/// Convert all expression-type arguments of statement
 	/// to a given type.
-	static void addArgs(Statement* _stmt, unsigned _seed, std::function<Expression*(unsigned)>);
+	static void addArgs(
+		Statement* _stmt,
+		std::function<Expression*(YulRandomNumGenerator&)>,
+		YulRandomNumGenerator& _rand
+	);
 
 	/// Apply mutator to unset expression-type statement
 	/// arguments.
@@ -113,19 +136,19 @@ struct YulProtoMutator
 	/// the mutation function to it
 	static void addArgsRec(
 		Statement* _stmt,
-		unsigned _seed,
-		std::function<void(Expression*, unsigned)> _mutator
+		std::function<void(Expression*, YulRandomNumGenerator& _rand)> _mutator,
+		YulRandomNumGenerator& _rand
 	);
 
 	/// Add a new statement to block
-	static void addStmt(Block *_block, unsigned _seed);
+	static void addStmt(Block *_block, YulRandomNumGenerator& _rand);
 
 	/// Create binary op expression of two variable references.
-	static Expression* binopExpression(unsigned _seed);
+	static Expression* binopExpression(YulRandomNumGenerator& _rand);
 
 	static void unsetExprMutator(
 		Expression* _expr,
-		unsigned _seed,
+		YulRandomNumGenerator& _rand,
 		std::function<void(Expression*, unsigned)> _mutateExprFunc
 	);
 
