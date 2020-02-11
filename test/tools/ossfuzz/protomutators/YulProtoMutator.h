@@ -49,7 +49,7 @@ struct YulRandomNumGenerator
 
 	explicit YulRandomNumGenerator(unsigned _seed): m_random(RandomEngine(_seed)) {}
 
-	unsigned random()
+	unsigned operator()()
 	{
 		return m_random();
 	}
