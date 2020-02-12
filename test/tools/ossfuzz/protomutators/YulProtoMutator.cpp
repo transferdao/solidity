@@ -668,7 +668,7 @@ static YPR<Block> addVarDecl(
 			},
 			_message,
 			_seed,
-			1,
+			YPM::s_highIP,
 			"Add variable declaration to statement block"
 		);
 	}
@@ -692,7 +692,7 @@ static YPR<Block> addMultiVarDecl(
 			},
 			_message,
 			_seed,
-			1,
+			YPM::s_highIP,
 			"Add multi variable declaration to statement block"
 		);
 	}

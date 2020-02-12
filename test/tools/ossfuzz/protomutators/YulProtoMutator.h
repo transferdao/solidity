@@ -182,10 +182,10 @@ struct YulProtoMutator
 	};
 
 	/// Modulo for mutations that should occur rarely
-	static constexpr unsigned s_lowIP = 67;
+	static constexpr unsigned s_lowIP = 11;
 	/// Modulo for mutations that should occur not too often
-	static constexpr unsigned s_mediumIP = 47;
+	static constexpr unsigned s_mediumIP = 7;
 	/// Modulo for mutations that should occur often
-	static constexpr unsigned s_highIP = 23;
+	static constexpr unsigned s_highIP = 5;
 };
 }
