@@ -1125,9 +1125,7 @@ static YPR<Expression> addDataExpr(
 			{
 				YPM::clearExpr(_message);
 				auto unopdata = new UnaryOpData();
-				auto objId = new ObjectId();
-				objId->set_id(_rand());
-				unopdata->set_allocated_identifier(objId);
+				unopdata->set_identifier(_rand());
 				unopdata->set_op(
 					YPM::EnumTypeConverter<UnaryOpData_UOpData>{}.enumFromSeed(_rand())
 				);
