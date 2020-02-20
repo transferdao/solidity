@@ -610,7 +610,7 @@ static YPR<Block> removeSwitchStmt(
 	}
 );
 
-// Add function call
+// Add function call to statement block
 static YPR<Block> addFuncCall(
 	[](Block* _message, unsigned int _seed)
 	{
@@ -1075,15 +1075,15 @@ static YPR<Block> addPopUserFunc(
 );
 
 // Add function call in another function's body
-static YPR<Block> addFuncCallInFuncBody(
-	[](Block* _message, unsigned int _seed)
+static YPR<FunctionDef> addFuncCallInFuncBody(
+	[](FunctionDef* _message, unsigned int _seed)
 	{
-		YPM::functionWrapper<Block>(
-			[](Block* _message, YulRandomNumGenerator& _rand)
+		YPM::functionWrapper<FunctionDef>(
+			[](FunctionDef* _message, YulRandomNumGenerator& _rand)
 			{
 				auto functioncall = new FunctionCall();
 				YPM::configureCall(functioncall, _rand);
-				_message->add_statements()->set_allocated_functioncall(functioncall);
+				_message->mutable_block()->add_statements()->set_allocated_functioncall(functioncall);
 			},
 			_message,
 			_seed,
