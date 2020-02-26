@@ -32,15 +32,15 @@ struct YulProtoCBRegistration
 class MutationInfo: public ScopeGuard
 {
 public:
-	MutationInfo(ProtobufMessage* _message, std::string const& _info);
+	MutationInfo(ProtobufMessage const* _message, std::string const& _info);
 
-	static void print(std::string const& _str)
+	static void writeLine(std::string const& _str)
 	{
 		std::cout << _str << std::endl;
 	}
 	void exitInfo();
 
-	ProtobufMessage* m_protobufMsg;
+	ProtobufMessage const* m_protobufMsg;
 };
 
 struct YulRandomNumGenerator
@@ -62,53 +62,57 @@ using CustomFuzzMutator = std::function<void(Proto*, YulRandomNumGenerator& _ran
 
 struct YulProtoMutator
 {
-	enum class PrintChanges { Yes, No };
+	enum class PrintChanges { No, Yes };
 
 	template <typename T>
 	static void functionWrapper(
 		CustomFuzzMutator<T> const& _callback,
 		T* _message,
 		unsigned int _seed,
-		unsigned _period,
+		unsigned int _period,
 		std::string const& _info,
 		PrintChanges _printChanges = PrintChanges::No
 	);
 
-	/// Return an integer literal of the given value.
+	/// Return an integer literal of the given value
 	/// @param _value: Value of the integer literal
+	/// @returns an integer literal protobuf message initialized with
+	/// the given value.
 	static Literal* intLiteral(unsigned _value);
 
 	/// Return a variable reference
 	/// @param _seed: Pseudo-random unsigned integer used as index
 	/// of variable to be referenced
+	/// @returns a variable reference protobuf message.
 	static VarRef* varRef(unsigned _seed);
 
 	/// Return a literal expression
 	/// @param _value: value of literal expression
+	/// @returns an expression protobuf message
 	static Expression* litExpression(unsigned _value);
 
 	/// Return a reference expression
-	/// @param _seed: Pseudo-random unsigned integer used as index
+	/// @param _rand: Pseudo-random number generator
 	/// of variable to be referenced
+	/// @returns a variable reference protobuf message
 	static Expression* refExpression(YulRandomNumGenerator& _rand);
 
 	/// Return a load expression from location zero
-	/// @param _seed: Pseudo-random unsigned integer used to create
-	/// type of load i.e., memory, storage, or calldata.
+	/// @param _rand: Pseudo-random number generator
 	static Expression* loadExpression(YulRandomNumGenerator& _rand);
 
 	static Expression* loadFromZero(YulRandomNumGenerator& _rand);
 
-	/// Configure function call from a pseudo-random seed.
+	/// Configure function call from a pseudo-random number generator.
 	/// @param _call: Pre-allocated FunctionCall protobuf message
-	/// @param _seed: Pseudo-random unsigned integer
+	/// @param _rand: Pseudo-random number generator
 	static void configureCall(FunctionCall *_call, YulRandomNumGenerator& _rand);
 
 	/// Configure function call arguments.
 	/// @param _callType: Enum stating type of function call
 	/// i.e., no-return, single-return, multi-decl, or multi-assign.
 	/// @param _call: Pre-allocated protobuf message of FunctionCall type
-	/// @param _seed: Pseudo-random unsigned integer.
+	/// @param _rand: Pseudo-random number generator
 	static void configureCallArgs(
 		FunctionCall_Returns _callType,
 		FunctionCall *_call,
@@ -130,10 +134,10 @@ struct YulProtoMutator
 	/// Apply mutator to unset expression-type statement
 	/// arguments.
 	/// @param _stmt: Statement to be mutated
-	/// @param _seed: Pseudo-random unsigned integer
 	/// @param _mutator: Mutator function that accepts an unset expression-type
 	/// statement argument and a pseudo-random integer and applies
 	/// the mutation function to it
+	/// @param _rand: Pseudo-random number generator
 	static void addArgsRec(
 		Statement* _stmt,
 		std::function<void(Expression*, YulRandomNumGenerator& _rand)> _mutator,
@@ -153,7 +157,7 @@ struct YulProtoMutator
 	);
 
 	/// Check if expression is set.
-	static bool set(Expression const& _expr)
+	static bool isSet(Expression const& _expr)
 	{
 		return _expr.expr_oneof_case() != Expression::EXPR_ONEOF_NOT_SET;
 	}
