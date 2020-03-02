@@ -1312,7 +1312,7 @@ string YulUtilFunctions::allocationFunction()
 	});
 }
 
-string YulUtilFunctions::allocateMemoryArrayFunction(ArrayType const& _type)
+string YulUtilFunctions::allocateMemoryArrayFunction(ArrayType const& _type, bool _shouldZero)
 {
 	solUnimplementedAssert(!_type.isByteArray(), "");
 
@@ -1320,7 +1320,11 @@ string YulUtilFunctions::allocateMemoryArrayFunction(ArrayType const& _type)
 	return m_functionCollector.createFunction(functionName, [&]() {
 		return Whiskers(R"(
 			function <functionName>(length) -> memPtr {
-				memPtr := <alloc>(<allocSize>(length))
+				let allocSize := <allocSize>(length)
+				memPtr := <alloc>(allocSize)
+				<?shouldZero>
+				calldatacopy(memPtr, calldatasize(), allocSize)
+				</shouldZero>
 				<?dynamic>
 				mstore(memPtr, length)
 				</dynamic>
@@ -1329,6 +1333,7 @@ string YulUtilFunctions::allocateMemoryArrayFunction(ArrayType const& _type)
 		("functionName", functionName)
 		("alloc", allocationFunction())
 		("allocSize", arrayAllocationSizeFunction(_type))
+		("shouldZero", _shouldZero)
 		("dynamic", _type.isDynamicallySized())
 		.render();
 	});

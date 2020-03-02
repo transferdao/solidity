@@ -245,10 +245,11 @@ public:
 	/// Return value: pointer
 	std::string allocationFunction();
 
-	/// @returns the name of a function that allocates a memory array.
+	/// @returns the name of a function that allocates a memory array
+	/// and zeroes it if _shouldZero is true.
 	/// For dynamic arrays it adds space for length and stores it.
 	/// signature: (length) -> memPtr
-	std::string allocateMemoryArrayFunction(ArrayType const& _type);
+	std::string allocateMemoryArrayFunction(ArrayType const& _type, bool _shouldZero = true);
 
 	/// @returns the name of the function that converts a value of type @a _from
 	/// to a value of type @a _to. The resulting vale is guaranteed to be in range
