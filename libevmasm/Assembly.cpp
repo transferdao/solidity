@@ -283,6 +283,16 @@ Json::Value Assembly::assemblyJSON(map<string, unsigned> const& _sourceIndices) 
 				createJsonValue("PUSHDEPLOYADDRESS", sourceIndex, i.location().start, i.location().end)
 			);
 			break;
+		case PushImmutable:
+			collection.append(
+				createJsonValue("PUSHIMMUTABLE", sourceIndex, i.location().start, i.location().end, m_immutables.at(h256(i.data())))
+			);
+			break;
+		case AssignImmutable:
+			collection.append(
+				createJsonValue("ASSIGNIMMUTABLE", sourceIndex, i.location().start, i.location().end, m_immutables.at(h256(i.data())))
+			);
+			break;
 		case Tag:
 			collection.append(
 				createJsonValue("tag", sourceIndex, i.location().start, i.location().end, toString(i.data())));
@@ -331,6 +341,20 @@ AssemblyItem Assembly::newPushLibraryAddress(string const& _identifier)
 	h256 h(util::keccak256(_identifier));
 	m_libraries[h] = _identifier;
 	return AssemblyItem{PushLibraryAddress, h};
+}
+
+AssemblyItem Assembly::newPushImmutable(string const& _identifier)
+{
+	h256 h(util::keccak256(_identifier));
+	m_immutables[h] = _identifier;
+	return AssemblyItem{PushImmutable, h};
+}
+
+AssemblyItem Assembly::newImmutableAssignment(string const& _identifier)
+{
+	h256 h(util::keccak256(_identifier));
+	m_immutables[h] = _identifier;
+	return AssemblyItem{AssignImmutable, h};
 }
 
 Assembly& Assembly::optimise(bool _enable, EVMVersion _evmVersion, bool _isCreation, size_t _runs)
@@ -495,16 +519,19 @@ LinkerObject const& Assembly::assemble() const
 	// Otherwise ensure the object is actually clear.
 	assertThrow(m_assembledObject.linkReferences.empty(), AssemblyException, "Unexpected link references.");
 
+	LinkerObject& ret = m_assembledObject;
+
 	size_t subTagSize = 1;
 	for (auto const& sub: m_subs)
 	{
-		sub->assemble();
+		auto const& linkerObject = sub->assemble();
+		for (auto const& [hash, occurrences]: linkerObject.immutableOccurrences)
+			ret.immutableOccurrences[hash] += std::move(occurrences);
 		for (size_t tagPos: sub->m_tagPositionsInBytecode)
 			if (tagPos != size_t(-1) && tagPos > subTagSize)
 				subTagSize = tagPos;
 	}
 
-	LinkerObject& ret = m_assembledObject;
 
 	size_t bytesRequiredForCode = bytesRequired(subTagSize);
 	m_tagPositionsInBytecode = vector<size_t>(m_usedTags, -1);
@@ -597,6 +624,23 @@ LinkerObject const& Assembly::assemble() const
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));
 			ret.linkReferences[ret.bytecode.size()] = m_libraries.at(i.data());
 			ret.bytecode.resize(ret.bytecode.size() + 20);
+			break;
+		case PushImmutable:
+			ret.bytecode.push_back(uint8_t(Instruction::PUSH32));
+			ret.immutableOccurrences[i.data()].emplace_back(ret.bytecode.size());
+			ret.bytecode.resize(ret.bytecode.size() + 32);
+			break;
+		case AssignImmutable:
+			for (auto const& offset: ret.immutableOccurrences[i.data()])
+			{
+				ret.bytecode.push_back(uint8_t(Instruction::DUP1));
+				// TODO: should we make use of the constant optimizer methods for pushing the offsets?
+				bytes offsetBytes = toCompactBigEndian(u256(offset));
+				ret.bytecode.push_back(uint8_t(Instruction::PUSH1) - 1 + offsetBytes.size());
+				ret.bytecode += offsetBytes;
+				ret.bytecode.push_back(uint8_t(Instruction::MSTORE));
+			}
+			ret.bytecode.push_back(uint8_t(Instruction::POP));
 			break;
 		case PushDeployTimeAddress:
 			ret.bytecode.push_back(uint8_t(Instruction::PUSH20));

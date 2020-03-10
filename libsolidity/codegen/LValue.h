@@ -23,6 +23,7 @@
 #pragma once
 
 #include <libsolidity/codegen/ArrayUtils.h>
+#include <libsolutil/Common.h>
 #include <liblangutil/SourceLocation.h>
 #include <memory>
 #include <vector>
@@ -120,6 +121,30 @@ public:
 private:
 	/// Special flag to deal with byte array elements.
 	bool m_padded = false;
+};
+
+/**
+ * Reference to an immutable variable. During contract creation this refers to a location in memory. At the
+ * end of contract creation the values from these memory locations are copied into all occurrences of the immutable
+ * variable in the runtime code.
+ */
+class ImmutableItem: public LValue
+{
+public:
+	ImmutableItem(CompilerContext& _compilerContext, VariableDeclaration const& _variable);
+	unsigned sizeOnStack() const override { return 0; }
+	void retrieveValue(langutil::SourceLocation const& _location, bool _remove = false) const override;
+	virtual void storeValue(
+		Type const& _sourceType,
+		langutil::SourceLocation const& _location = {},
+		bool _move = false
+	) const override;
+	virtual void setToZero(
+		langutil::SourceLocation const& _location = {},
+		bool _removeReference = true
+	) const override;
+private:
+	VariableDeclaration const& m_variable;
 };
 
 /**
