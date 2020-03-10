@@ -1743,8 +1743,7 @@ Type const& IRGeneratorForStatements::type(Expression const& _expression)
 
 bool IRGeneratorForStatements::visit(TryStatement const& _tryStatement)
 {
-	optional<ReturnInfo> outerReturnInfo(std::move(m_returnInfo));
-	ScopeGuard _leaveGuard = ScopeGuard([&]() { m_returnInfo.swap(outerReturnInfo); });
+	solAssert(!m_returnInfo.has_value(), "");
 
 	m_returnInfo.reset();
 	_tryStatement.externalCall().accept(*this);
