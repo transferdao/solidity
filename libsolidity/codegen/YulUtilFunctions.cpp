@@ -1316,7 +1316,7 @@ string YulUtilFunctions::allocateMemoryArrayFunction(ArrayType const& _type, boo
 {
 	solUnimplementedAssert(!_type.isByteArray(), "");
 
-	string functionName = "allocate_memory_array_" + _type.identifier();
+	string functionName = "allocate_" + string(_shouldZero ? "and_zero_" : "") + "memory_array_" + _type.identifier();
 	return m_functionCollector.createFunction(functionName, [&]() {
 		return Whiskers(R"(
 			function <functionName>(length) -> memPtr {
