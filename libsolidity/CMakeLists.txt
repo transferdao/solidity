@@ -14,6 +14,8 @@ set(sources
 	analysis/DeclarationContainer.h
 	analysis/DocStringAnalyser.cpp
 	analysis/DocStringAnalyser.h
+	analysis/FunctionCallGraph.h
+	analysis/FunctionCallGraph.cpp
 	analysis/GlobalContext.cpp
 	analysis/GlobalContext.h
 	analysis/NameAndTypeResolver.cpp
