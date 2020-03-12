@@ -5,6 +5,7 @@ Language Features:
 
 Compiler Features:
  * Metadata: Added support for IPFS hashes of large files that need to be split in multiple chunks.
+ * SMTChecker: Support array member ``length``.
 
 
 Bugfixes:
