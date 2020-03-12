@@ -532,6 +532,23 @@ LinkerObject const& Assembly::assemble() const
 				subTagSize = tagPos;
 	}
 
+	bool setsImmutables = false;
+	bool pushesImmutables = false;
+
+	for (auto const& i: m_items)
+		if (i.type() == AssignImmutable)
+		{
+			i.setImmutableOccurrences(ret.immutableOccurrences[i.data()].size());
+			setsImmutables = true;
+		}
+		else if (i.type() == PushImmutable)
+			pushesImmutables = true;
+	if (setsImmutables || pushesImmutables)
+		assertThrow(
+			setsImmutables != pushesImmutables,
+			AssemblyException,
+			"Cannot push and assign immutables in the same assembly subroutine."
+		);
 
 	size_t bytesRequiredForCode = bytesRequired(subTagSize);
 	m_tagPositionsInBytecode = vector<size_t>(m_usedTags, -1);

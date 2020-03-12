@@ -155,6 +155,8 @@ public:
 
 	size_t m_modifierDepth = 0;
 
+	void setImmutableOccurrences(size_t _n) const { m_immutableOccurrences = std::make_shared<size_t>(_n); }
+
 private:
 	AssemblyItemType m_type;
 	Instruction m_instruction; ///< Only valid if m_type == Operation
@@ -164,6 +166,8 @@ private:
 	/// Pushed value for operations with data to be determined during assembly stage,
 	/// e.g. PushSubSize, PushTag, PushSub, etc.
 	mutable std::shared_ptr<u256> m_pushedValue;
+	/// Number of PushImmutable's with the same hash. Only used for AssignImmutable.
+	mutable std::shared_ptr<size_t> m_immutableOccurrences;
 };
 
 inline size_t bytesRequired(AssemblyItems const& _items, size_t _addressLength)

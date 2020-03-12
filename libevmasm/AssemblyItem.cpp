@@ -83,7 +83,10 @@ unsigned AssemblyItem::bytesRequired(unsigned _addressLength) const
 	case PushImmutable:
 		return 1 + 32;
 	case AssignImmutable:
-		return -1u; // No upper bound possible, so maximum valus. TODO: check if this can cause overflows anywhere.
+		if (m_immutableOccurrences)
+			return 1 + (3 + 32) * *m_immutableOccurrences;
+		else
+			return 1 + (3 + 32) * 1024; // 1024 occurrences are beyond the maximum code size anyways.
 	default:
 		break;
 	}
