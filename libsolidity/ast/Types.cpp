@@ -1523,7 +1523,7 @@ string ReferenceType::identifierLocationSuffix() const
 			id += "_ptr";
 		break;
 	case DataLocation::Memory:
-		id += "_memory";
+		id += "_memory_ptr";
 		break;
 	case DataLocation::CallData:
 		id += "_calldata";

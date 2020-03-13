@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(type_identifiers)
 	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("bytes32")->identifier(), "t_bytes32");
 	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("bool")->identifier(), "t_bool");
 	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("bytes")->identifier(), "t_bytes_storage_ptr");
-	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("bytes memory")->identifier(), "t_bytes_memory");
+	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("bytes memory")->identifier(), "t_bytes_memory_ptr");
 	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("bytes storage")->identifier(), "t_bytes_storage_ptr");
 	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("bytes calldata")->identifier(), "t_bytes_calldata_ptr");
 	BOOST_CHECK_EQUAL(TypeProvider::fromElementaryTypeName("string")->identifier(), "t_string_storage_ptr");
