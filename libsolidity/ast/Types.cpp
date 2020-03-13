@@ -1868,7 +1868,8 @@ u256 ArrayType::memoryDataSize() const
 std::unique_ptr<ReferenceType> ArrayType::copyForLocation(DataLocation _location, bool _isPointer) const
 {
 	auto copy = make_unique<ArrayType>(_location);
-	copy->m_isPointer = _isPointer;
+	if (_location == DataLocation::Storage)
+		copy->m_isPointer = _isPointer;
 	copy->m_arrayKind = m_arrayKind;
 	copy->m_baseType = copy->copyForLocationIfReference(m_baseType);
 	copy->m_hasDynamicLength = m_hasDynamicLength;
@@ -2247,7 +2248,8 @@ TypeResult StructType::interfaceType(bool _inLibrary) const
 std::unique_ptr<ReferenceType> StructType::copyForLocation(DataLocation _location, bool _isPointer) const
 {
 	auto copy = make_unique<StructType>(m_struct, _location);
-	copy->m_isPointer = _isPointer;
+	if (_location == DataLocation::Storage)
+		copy->m_isPointer = _isPointer;
 	return copy;
 }
 
