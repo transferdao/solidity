@@ -54,7 +54,7 @@
                     "storageLocation": "default",
                     "typeDescriptions":
                     {
-                      "typeIdentifier": "t_string_memory_ptr",
+                      "typeIdentifier": "t_string_memory",
                       "typeString": "string"
                     },
                     "typeName": null,

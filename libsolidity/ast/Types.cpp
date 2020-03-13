@@ -1519,6 +1519,8 @@ string ReferenceType::identifierLocationSuffix() const
 	{
 	case DataLocation::Storage:
 		id += "_storage";
+		if (isPointer())
+			id += "_ptr";
 		break;
 	case DataLocation::Memory:
 		id += "_memory";
@@ -1527,8 +1529,6 @@ string ReferenceType::identifierLocationSuffix() const
 		id += "_calldata";
 		break;
 	}
-	if (isPointer())
-		id += "_ptr";
 	return id;
 }
 
