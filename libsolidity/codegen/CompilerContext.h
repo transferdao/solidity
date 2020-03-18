@@ -64,6 +64,7 @@ public:
 		m_asm(std::make_shared<evmasm::Assembly>()),
 		m_evmVersion(_evmVersion),
 		m_revertStrings(_revertStrings),
+		m_reservedMemory{0},
 		m_runtimeContext(_runtimeContext),
 		m_abiFunctions(m_evmVersion, m_revertStrings, m_yulFunctionCollector),
 		m_yulUtilFunctions(m_evmVersion, m_revertStrings, m_yulFunctionCollector)
@@ -87,7 +88,8 @@ public:
 	/// @returns a list of slot names referring to the stack slots of an immutable variable.
 	static std::vector<std::string> immutableVariableSlotNames(VariableDeclaration const& _variable);
 
-	size_t const& reservedMemory() const { return m_reservedMemory; }
+	/// @returns the reserved memory and resets it to mark it as used.
+	size_t reservedMemory();
 
 	void addVariable(VariableDeclaration const& _declaration, unsigned _offsetToCurrent = 0);
 	void removeVariable(Declaration const& _declaration);
@@ -371,7 +373,9 @@ private:
 	/// Memory offsets reserved for the values of immutable variables during contract creation.
 	std::map<VariableDeclaration const*, size_t> m_immutableVariables;
 	/// Total amount of reserved memory. Reserved memory is used to store immutable variables during contract creation.
-	size_t m_reservedMemory = 0;
+	/// This has to be finalized before initialiseFreeMemoryPointer() is called. That function
+	/// will reset the optional to verify that.
+	std::optional<size_t> m_reservedMemory = {0};
 	/// Offsets of local variables on the stack (relative to stack base).
 	/// This needs to be a stack because if a modifier contains a local variable and this
 	/// modifier is applied twice, the position of the variable needs to be restored

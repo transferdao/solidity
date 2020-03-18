@@ -76,8 +76,9 @@ void CompilerContext::addImmutable(VariableDeclaration const& _variable)
 	solAssert(_variable.immutable(), "Attempted to register a non-immutable variable as immutable.");
 	solUnimplementedAssert(_variable.annotation().type->isValueType(), "Only immutable variables of value type are supported.");
 	solAssert(m_runtimeContext, "Attempted to register an immutable variable for runtime code generation.");
-	m_immutableVariables[&_variable] = m_reservedMemory;
-	m_reservedMemory += _variable.annotation().type->memoryHeadSize();
+	m_immutableVariables[&_variable] = *m_reservedMemory;
+	solAssert(_variable.annotation().type->memoryHeadSize() == 32, "Memory writes might overlap.");
+	*m_reservedMemory += _variable.annotation().type->memoryHeadSize();
 }
 
 size_t CompilerContext::immutableMemoryOffset(VariableDeclaration const& _variable) const
@@ -109,6 +110,14 @@ vector<string> CompilerContext::immutableVariableSlotNames(VariableDeclaration c
 	};
 	collectSlotNames(baseName, _variable.annotation().type, collectSlotNames);
 	return names;
+}
+
+size_t CompilerContext::reservedMemory()
+{
+	solAssert(m_reservedMemory.has_value(), "Reserved memory was used before ");
+	size_t reservedMemory = *m_reservedMemory;
+	m_reservedMemory = std::nullopt;
+	return reservedMemory;
 }
 
 void CompilerContext::startFunction(Declaration const& _function)
