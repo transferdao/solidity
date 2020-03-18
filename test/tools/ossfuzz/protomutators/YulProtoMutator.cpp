@@ -1393,35 +1393,35 @@ void YPM::addArgs(
 	switch (_stmt->stmt_oneof_case())
 	{
 	case Statement::kDecl:
-		if (!_stmt->decl().has_expr() || _stmt->decl().expr().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->decl().has_expr() || !isSet(_stmt->decl().expr()))
 			_stmt->mutable_decl()->set_allocated_expr(_func(_rand));
 		break;
 	case Statement::kAssignment:
-		if (!_stmt->assignment().has_expr() || _stmt->assignment().expr().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->assignment().has_expr() || !isSet(_stmt->assignment().expr()))
 			_stmt->mutable_assignment()->set_allocated_expr(_func(_rand));
 		if (!_stmt->assignment().has_ref_id() || _stmt->assignment().ref_id().varnum() == 0)
 			_stmt->mutable_assignment()->set_allocated_ref_id(varRef(_rand()));
 		break;
 	case Statement::kIfstmt:
-		if (!_stmt->ifstmt().has_cond() || _stmt->ifstmt().cond().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->ifstmt().has_cond() || !isSet(_stmt->ifstmt().cond()))
 			_stmt->mutable_ifstmt()->set_allocated_cond(_func(_rand));
 		break;
 	case Statement::kStorageFunc:
-		if (!_stmt->storage_func().has_loc() || _stmt->storage_func().loc().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->storage_func().has_loc() || !isSet(_stmt->storage_func().loc()))
 			_stmt->mutable_storage_func()->set_allocated_loc(_func(_rand));
-		if (!_stmt->storage_func().has_val() || _stmt->storage_func().val().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->storage_func().has_val() || !isSet(_stmt->storage_func().val()))
 			_stmt->mutable_storage_func()->set_allocated_val(_func(_rand));
 		break;
 	case Statement::kBlockstmt:
 		break;
 	case Statement::kForstmt:
-		if (!_stmt->forstmt().has_for_cond() || _stmt->forstmt().for_cond().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->forstmt().has_for_cond() || !isSet(_stmt->forstmt().for_cond()))
 			_stmt->mutable_forstmt()->set_allocated_for_cond(_func(_rand));
 		break;
 	case Statement::kBoundedforstmt:
 		break;
 	case Statement::kSwitchstmt:
-		if (!_stmt->switchstmt().has_switch_expr() || _stmt->switchstmt().switch_expr().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->switchstmt().has_switch_expr() || !isSet(_stmt->switchstmt().switch_expr()))
 			_stmt->mutable_switchstmt()->set_allocated_switch_expr(_func(_rand));
 		break;
 	case Statement::kBreakstmt:
@@ -1429,47 +1429,47 @@ void YPM::addArgs(
 	case Statement::kContstmt:
 		break;
 	case Statement::kLogFunc:
-		if (!_stmt->log_func().has_pos() || _stmt->log_func().pos().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->log_func().has_pos() || !isSet(_stmt->log_func().pos()))
 			_stmt->mutable_log_func()->set_allocated_pos(_func(_rand));
-		if (!_stmt->log_func().has_size() || _stmt->log_func().size().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->log_func().has_size() || !isSet(_stmt->log_func().size()))
 			_stmt->mutable_log_func()->set_allocated_size(_func(_rand));
-		if (!_stmt->log_func().has_t1() || _stmt->log_func().t1().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->log_func().has_t1() || !isSet(_stmt->log_func().t1()))
 			_stmt->mutable_log_func()->set_allocated_t1(_func(_rand));
-		if (!_stmt->log_func().has_t2() || _stmt->log_func().t2().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->log_func().has_t2() || !isSet(_stmt->log_func().t2()))
 			_stmt->mutable_log_func()->set_allocated_t2(_func(_rand));
-		if (!_stmt->log_func().has_t3() || _stmt->log_func().t3().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->log_func().has_t3() || !isSet(_stmt->log_func().t3()))
 			_stmt->mutable_log_func()->set_allocated_t3(_func(_rand));
-		if (!_stmt->log_func().has_t4() || _stmt->log_func().t4().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->log_func().has_t4() || !isSet(_stmt->log_func().t4()))
 			_stmt->mutable_log_func()->set_allocated_t4(_func(_rand));
 		break;
 	case Statement::kCopyFunc:
-		if (!_stmt->copy_func().has_target() || _stmt->copy_func().target().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->copy_func().has_target() || !isSet(_stmt->copy_func().target()))
 			_stmt->mutable_copy_func()->set_allocated_target(_func(_rand));
-		if (!_stmt->copy_func().has_source() || _stmt->copy_func().source().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->copy_func().has_source() || !isSet(_stmt->copy_func().source()))
 			_stmt->mutable_copy_func()->set_allocated_source(_func(_rand));
-		if (!_stmt->copy_func().has_size() || _stmt->copy_func().size().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->copy_func().has_size() || !isSet(_stmt->copy_func().size()))
 			_stmt->mutable_copy_func()->set_allocated_size(_func(_rand));
 		break;
 	case Statement::kExtcodeCopy:
-		if (!_stmt->extcode_copy().has_addr() || _stmt->extcode_copy().addr().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->extcode_copy().has_addr() || !isSet(_stmt->extcode_copy().addr()))
 			_stmt->mutable_extcode_copy()->set_allocated_addr(_func(_rand));
-		if (!_stmt->extcode_copy().has_target() || _stmt->extcode_copy().target().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->extcode_copy().has_target() || !isSet(_stmt->extcode_copy().target()))
 			_stmt->mutable_extcode_copy()->set_allocated_target(_func(_rand));
-		if (!_stmt->extcode_copy().has_source() || _stmt->extcode_copy().source().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->extcode_copy().has_source() || !isSet(_stmt->extcode_copy().source()))
 			_stmt->mutable_extcode_copy()->set_allocated_source(_func(_rand));
-		if (!_stmt->extcode_copy().has_size() || _stmt->extcode_copy().size().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->extcode_copy().has_size() || !isSet(_stmt->extcode_copy().size()))
 			_stmt->mutable_extcode_copy()->set_allocated_size(_func(_rand));
 		break;
 	case Statement::kTerminatestmt:
 		break;
 	case Statement::kFunctioncall:
-		if (!_stmt->functioncall().has_in_param1() || _stmt->functioncall().in_param1().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->functioncall().has_in_param1() || !isSet(_stmt->functioncall().in_param1()))
 			_stmt->mutable_functioncall()->set_allocated_in_param1(_func(_rand));
-		if (!_stmt->functioncall().has_in_param2() || _stmt->functioncall().in_param2().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->functioncall().has_in_param2() || !isSet(_stmt->functioncall().in_param2()))
 			_stmt->mutable_functioncall()->set_allocated_in_param2(_func(_rand));
-		if (!_stmt->functioncall().has_in_param3() || _stmt->functioncall().in_param3().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->functioncall().has_in_param3() || !isSet(_stmt->functioncall().in_param3()))
 			_stmt->mutable_functioncall()->set_allocated_in_param3(_func(_rand));
-		if (!_stmt->functioncall().has_in_param4() || _stmt->functioncall().in_param4().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->functioncall().has_in_param4() || !isSet(_stmt->functioncall().in_param4()))
 			_stmt->mutable_functioncall()->set_allocated_in_param4(_func(_rand));
 		if (!_stmt->functioncall().has_out_param1() || _stmt->functioncall().out_param1().varnum() == 0)
 			_stmt->mutable_functioncall()->set_allocated_out_param1(varRef(_rand()));
@@ -1483,7 +1483,7 @@ void YPM::addArgs(
 	case Statement::kFuncdef:
 		break;
 	case Statement::kPop:
-		if (!_stmt->pop().has_expr() || _stmt->pop().expr().expr_oneof_case() == Expression::EXPR_ONEOF_NOT_SET)
+		if (!_stmt->pop().has_expr() || !isSet(_stmt->pop().expr()))
 			_stmt->mutable_pop()->set_allocated_expr(_func(_rand));
 		break;
 	case Statement::kLeave:
