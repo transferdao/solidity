@@ -297,7 +297,7 @@ public:
 		return m_asm->assemblyJSON(_indicies);
 	}
 
-	evmasm::LinkerObject const& assembledObject() const { return m_asm->assemble(); }
+	evmasm::LinkerObject const& assembledObject() const;
 	evmasm::LinkerObject const& assembledRuntimeObject(size_t _subIndex) const { return m_asm->sub(_subIndex).assemble(); }
 
 	/**

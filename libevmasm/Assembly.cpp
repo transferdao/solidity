@@ -522,11 +522,19 @@ LinkerObject const& Assembly::assemble() const
 	LinkerObject& ret = m_assembledObject;
 
 	size_t subTagSize = 1;
+	map<u256, vector<size_t>> immutableReferencesBySub;
 	for (auto const& sub: m_subs)
 	{
 		auto const& linkerObject = sub->assemble();
-		for (auto const& [hash, occurrences]: linkerObject.immutableReferences)
-			ret.immutableReferences[hash] += std::move(occurrences);
+		if (!linkerObject.immutableReferences.empty())
+		{
+			assertThrow(
+				immutableReferencesBySub.empty(),
+				AssemblyException,
+				"More than one sub-assembly references immutables."
+			);
+			immutableReferencesBySub = linkerObject.immutableReferences;
+		}
 		for (size_t tagPos: sub->m_tagPositionsInBytecode)
 			if (tagPos != size_t(-1) && tagPos > subTagSize)
 				subTagSize = tagPos;
@@ -538,7 +546,7 @@ LinkerObject const& Assembly::assemble() const
 	for (auto const& i: m_items)
 		if (i.type() == AssignImmutable)
 		{
-			i.setImmutableOccurrences(ret.immutableReferences[i.data()].size());
+			i.setImmutableOccurrences(immutableReferencesBySub[i.data()].size());
 			setsImmutables = true;
 		}
 		else if (i.type() == PushImmutable)
@@ -648,7 +656,7 @@ LinkerObject const& Assembly::assemble() const
 			ret.bytecode.resize(ret.bytecode.size() + 32);
 			break;
 		case AssignImmutable:
-			for (auto const& offset: ret.immutableReferences[i.data()])
+			for (auto const& offset: immutableReferencesBySub[i.data()])
 			{
 				ret.bytecode.push_back(uint8_t(Instruction::DUP1));
 				// TODO: should we make use of the constant optimizer methods for pushing the offsets?
@@ -657,6 +665,7 @@ LinkerObject const& Assembly::assemble() const
 				ret.bytecode += offsetBytes;
 				ret.bytecode.push_back(uint8_t(Instruction::MSTORE));
 			}
+			immutableReferencesBySub.erase(i.data());
 			ret.bytecode.push_back(uint8_t(Instruction::POP));
 			break;
 		case PushDeployTimeAddress:
@@ -675,6 +684,13 @@ LinkerObject const& Assembly::assemble() const
 			assertThrow(false, InvalidOpcode, "Unexpected opcode while assembling.");
 		}
 	}
+
+	assertThrow(
+		immutableReferencesBySub.empty(),
+		AssemblyException,
+		"Some immutables were read from but never assigned."
+	);
+
 
 	if (!m_subs.empty() || !m_data.empty() || !m_auxiliaryData.empty())
 		// Append an INVALID here to help tests find miscompilation.

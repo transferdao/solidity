@@ -549,8 +549,15 @@ void CompilerContext::optimizeYul(yul::Object& _object, yul::EVMDialect const& _
 #endif
 }
 
+LinkerObject const& CompilerContext::assembledObject() const
+{
+	LinkerObject const& object = m_asm->assemble();
+	solAssert(object.immutableReferences.empty(), "Leftover immutables.");
+	return object;
+}
+
 FunctionDefinition const& CompilerContext::resolveVirtualFunction(
-	FunctionDefinition const& _function,
+		FunctionDefinition const& _function,
 	vector<ContractDefinition const*>::const_iterator _searchStart
 )
 {
