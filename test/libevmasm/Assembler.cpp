@@ -91,6 +91,8 @@ BOOST_AUTO_TEST_CASE(all_assembly_items)
 	// AssignImmutable.
 	// Note that since there is not reference to "someOtherImmutable", this will compile to a simple POP in the hex output.
 	_assembly.appendImmutableAssignment("someOtherImmutable");
+	_assembly.append(u256(2));
+	_assembly.appendImmutableAssignment("someImmutable");
 	// Operation
 	_assembly.append(Instruction::STOP);
 	_assembly.appendAuxiliaryDataToEnd(bytes{0x42, 0x66});
@@ -100,8 +102,10 @@ BOOST_AUTO_TEST_CASE(all_assembly_items)
 
 	BOOST_CHECK_EQUAL(
 		_assembly.assemble().toHex(),
-		"5b6001600220606873__$bf005014d9d0f534b8fcb268bd84c491a2$__"
-		"60005660606022603e7300000000000000000000000000000000000000005000fe"
+		"5b6001600220606f73__$bf005014d9d0f534b8fcb268bd84c491a2$__"
+		"60005660676022604573000000000000000000000000000000000000000050"
+		"60028060015250"
+		"00fe"
 		"7f0000000000000000000000000000000000000000000000000000000000000000"
 		"fe010203044266eeaa"
 	);
@@ -118,6 +122,8 @@ BOOST_AUTO_TEST_CASE(all_assembly_items)
 		"  dataOffset(sub_0)\n"
 		"  deployTimeAddress()\n"
 		"  assignImmutable(\"0xc3978657661c4d8e32e3d5f42597c009f0d3859e9f9d0d94325268f9799e2bfb\")\n"
+		"  0x02\n"
+		"  assignImmutable(\"0x26f2c0195e9d408feff3abd77d83f2971f3c9a18d1e8a9437c7835ae4211fc9f\")\n"
 		"  stop\n"
 		"stop\n"
 		"data_a6885b3731702da62e8e4a8f584ac46a7f6822f4e2ba50fba902f67b1588d23b 01020304\n"
@@ -147,6 +153,8 @@ BOOST_AUTO_TEST_CASE(all_assembly_items)
 		"{\"begin\":1,\"end\":3,\"name\":\"PUSH [$]\",\"source\":0,\"value\":\"0000000000000000000000000000000000000000000000000000000000000000\"},"
 		"{\"begin\":1,\"end\":3,\"name\":\"PUSHDEPLOYADDRESS\",\"source\":0},"
 		"{\"begin\":1,\"end\":3,\"name\":\"ASSIGNIMMUTABLE\",\"source\":0,\"value\":\"someOtherImmutable\"},"
+		"{\"begin\":1,\"end\":3,\"name\":\"PUSH\",\"source\":0,\"value\":\"2\"},"
+		"{\"begin\":1,\"end\":3,\"name\":\"ASSIGNIMMUTABLE\",\"source\":0,\"value\":\"someImmutable\"},"
 		"{\"begin\":1,\"end\":3,\"name\":\"STOP\",\"source\":0}"
 		"],\".data\":{\"0\":{\".code\":["
 		"{\"begin\":6,\"end\":8,\"name\":\"PUSHIMMUTABLE\",\"source\":1,\"value\":\"someImmutable\"},"
