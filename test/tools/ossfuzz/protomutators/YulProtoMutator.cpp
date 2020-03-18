@@ -35,8 +35,8 @@ template <typename T>
 void YulProtoMutator::functionWrapper(
 	CustomFuzzMutator<T> const& _callback,
 	T* _message,
-	unsigned int _seed,
-	unsigned int _period,
+	unsigned _seed,
+	unsigned _period,
 	string const& _info,
 	PrintChanges _printChanges)
 {
@@ -56,7 +56,7 @@ void YulProtoMutator::functionWrapper(
 
 // Add assignment to m/s/calldataload(0)
 static YPR<AssignmentStatement> assignLoadZero(
-	[](AssignmentStatement* _message, unsigned int _seed)
+	[](AssignmentStatement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<AssignmentStatement>(
 			[](AssignmentStatement* _message, YulRandomNumGenerator& _rand)
@@ -74,7 +74,7 @@ static YPR<AssignmentStatement> assignLoadZero(
 
 // Invert condition of an if statement
 static YPR<IfStmt> invertIfCondition(
-	[](IfStmt* _message, unsigned int _seed)
+	[](IfStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<IfStmt>(
 			[](IfStmt* _message, YulRandomNumGenerator&)
@@ -100,7 +100,7 @@ static YPR<IfStmt> invertIfCondition(
 
 // Remove inverted condition in if statement
 static YPR<IfStmt> revertIfCondition(
-	[](IfStmt* _message, unsigned int _seed)
+	[](IfStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<IfStmt>(
 			[](IfStmt* _message, YulRandomNumGenerator&)
@@ -126,7 +126,7 @@ static YPR<IfStmt> revertIfCondition(
 
 // Append break statement to a statement block
 static YPR<Block> addBreakStmt(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -143,7 +143,7 @@ static YPR<Block> addBreakStmt(
 
 // Remove break statement in body of a for-loop statement
 static YPR<ForStmt> removeBreakStmt(
-	[](ForStmt* _message, unsigned int _seed)
+	[](ForStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<ForStmt>(
 			[](ForStmt* _message, YulRandomNumGenerator&)
@@ -167,7 +167,7 @@ static YPR<ForStmt> removeBreakStmt(
 
 // Add continue statement to statement block.
 static YPR<Block> addContStmt(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -184,7 +184,7 @@ static YPR<Block> addContStmt(
 
 /// Remove continue statement from for-loop body
 static YPR<ForStmt> removeContinueStmt(
-	[](ForStmt* _message, unsigned int _seed)
+	[](ForStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<ForStmt>(
 			[](ForStmt* _message, YulRandomNumGenerator&)
@@ -208,7 +208,7 @@ static YPR<ForStmt> removeContinueStmt(
 
 /// Mutate expression into an s/m/calldataload
 static YPR<Expression> addLoadZero(
-	[](Expression* _message, unsigned int _seed)
+	[](Expression* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Expression>(
 			[](Expression* _message, YulRandomNumGenerator& _rand)
@@ -228,7 +228,7 @@ static YPR<Expression> addLoadZero(
 
 /// Remove unary operation containing a load from memory/storage/calldata
 static YPR<UnaryOp> removeLoad(
-	[](UnaryOp* _message, unsigned int _seed)
+	[](UnaryOp* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<UnaryOp>(
 			[](UnaryOp* _message, YulRandomNumGenerator&)
@@ -251,7 +251,7 @@ static YPR<UnaryOp> removeLoad(
 
 /// Add m/sstore(0, variable)
 static YPR<Block> addStoreToZero(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 		[](Block* _message, YulRandomNumGenerator& _rand)
@@ -272,7 +272,7 @@ static YPR<Block> addStoreToZero(
 );
 
 static YPR<Block> removeStore(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -294,7 +294,7 @@ static YPR<Block> removeStore(
 );
 
 static YPR<ForStmt> invertForCondition(
-	[](ForStmt* _message, unsigned int _seed)
+	[](ForStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<ForStmt>(
 			[](ForStmt* _message, YulRandomNumGenerator&)
@@ -322,7 +322,7 @@ static YPR<ForStmt> invertForCondition(
 
 /// Uninvert condition of a for statement
 static YPR<ForStmt> uninvertForCondition(
-	[](ForStmt* _message, unsigned int _seed)
+	[](ForStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<ForStmt>(
 			[](ForStmt* _message, YulRandomNumGenerator&)
@@ -346,7 +346,7 @@ static YPR<ForStmt> uninvertForCondition(
 
 /// Make for loop condition a function call that returns a single value
 static YPR<ForStmt> funcCallForCondition(
-	[](ForStmt* _message, unsigned int _seed)
+	[](ForStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<ForStmt>(
 			[](ForStmt* _message, YulRandomNumGenerator& _rand)
@@ -373,7 +373,7 @@ static YPR<ForStmt> funcCallForCondition(
 
 /// Define an identity function y = x
 static YPR<Block> identityFunction(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -405,7 +405,7 @@ static YPR<Block> identityFunction(
 
 // Add leave statement to a statement block
 static YPR<Block> addLeave(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -422,7 +422,7 @@ static YPR<Block> addLeave(
 
 // Remove leave statement from function statement-block.
 static YPR<FunctionDef> removeLeave(
-	[](FunctionDef* _message, unsigned int _seed)
+	[](FunctionDef* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<FunctionDef>(
 			[](FunctionDef* _message, YulRandomNumGenerator&)
@@ -445,7 +445,7 @@ static YPR<FunctionDef> removeLeave(
 
 // Add assignment to block
 static YPR<Block> addAssignment(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -470,7 +470,7 @@ static YPR<Block> addAssignment(
 
 // Remove assignment from block
 static YPR<Block> removeAssignment(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -493,7 +493,7 @@ static YPR<Block> removeAssignment(
 
 // Add constant assignment
 static YPR<Block> addConstantAssignment(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -517,7 +517,7 @@ static YPR<Block> addConstantAssignment(
 
 // Add if statement
 static YPR<Block> addIfStmt(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -544,7 +544,7 @@ static YPR<Block> addIfStmt(
 
 // Remove if statement
 static YPR<Block> removeIfStmt(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -567,7 +567,7 @@ static YPR<Block> removeIfStmt(
 
 // Add switch statement
 static YPR<Block> addSwitchStmt(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -589,7 +589,7 @@ static YPR<Block> addSwitchStmt(
 
 // Remove switch statement
 static YPR<Block> removeSwitchStmt(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -612,7 +612,7 @@ static YPR<Block> removeSwitchStmt(
 
 // Add function call to statement block
 static YPR<Block> addFuncCall(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -631,7 +631,7 @@ static YPR<Block> addFuncCall(
 
 // Remove function call
 static YPR<Block> removeFuncCall(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -654,7 +654,7 @@ static YPR<Block> removeFuncCall(
 
 // Add variable declaration
 static YPR<Block> addVarDecl(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -676,7 +676,7 @@ static YPR<Block> addVarDecl(
 
 // Add multivar decl
 static YPR<Block> addMultiVarDecl(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -700,7 +700,7 @@ static YPR<Block> addMultiVarDecl(
 
 // Remove variable declaration
 static YPR<Block> removeVarDecl(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -723,7 +723,7 @@ static YPR<Block> removeVarDecl(
 
 // Remove multi variable declaration
 static YPR<Block> removeMultiVarDecl(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -746,7 +746,7 @@ static YPR<Block> removeMultiVarDecl(
 
 // Add function definition
 static YPR<Block> addFuncDef(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -768,7 +768,7 @@ static YPR<Block> addFuncDef(
 
 // Remove function definition
 static YPR<Block> removeFuncDef(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -791,7 +791,7 @@ static YPR<Block> removeFuncDef(
 
 // Add bounded for stmt
 static YPR<Block> addBoundedFor(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -808,7 +808,7 @@ static YPR<Block> addBoundedFor(
 
 // Remove bounded for stmt
 static YPR<Block> removeBoundedFor(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -831,7 +831,7 @@ static YPR<Block> removeBoundedFor(
 
 // Add generic for stmt
 static YPR<Block> addGenericFor(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -848,7 +848,7 @@ static YPR<Block> addGenericFor(
 
 // Remove generic for stmt
 static YPR<Block> removeGenericFor(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -871,7 +871,7 @@ static YPR<Block> removeGenericFor(
 
 // Add revert stmt
 static YPR<Block> addRevert(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -894,7 +894,7 @@ static YPR<Block> addRevert(
 
 // Remove revert statement
 static YPR<Block> removeRevert(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -918,7 +918,7 @@ static YPR<Block> removeRevert(
 
 // Mutate nullary op
 static YPR<NullaryOp> mutateNullaryOp(
-	[](NullaryOp* _message, unsigned int _seed)
+	[](NullaryOp* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<NullaryOp>(
 			[](NullaryOp* _message, YulRandomNumGenerator& _rand)
@@ -938,7 +938,7 @@ static YPR<NullaryOp> mutateNullaryOp(
 
 // Mutate binary op
 static YPR<BinaryOp> mutateBinaryOp(
-	[](BinaryOp* _message, unsigned int _seed)
+	[](BinaryOp* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<BinaryOp>(
 			[](BinaryOp* _message, YulRandomNumGenerator& _rand)
@@ -958,7 +958,7 @@ static YPR<BinaryOp> mutateBinaryOp(
 
 // Mutate unary op
 static YPR<UnaryOp> mutateUnaryOp(
-	[](UnaryOp* _message, unsigned int _seed)
+	[](UnaryOp* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<UnaryOp>(
 			[](UnaryOp* _message, YulRandomNumGenerator& _rand)
@@ -978,7 +978,7 @@ static YPR<UnaryOp> mutateUnaryOp(
 
 // Add pop(call())
 static YPR<Block> addPopCall(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -1003,7 +1003,7 @@ static YPR<Block> addPopCall(
 
 // Remove pop
 static YPR<Block> removePop(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator&)
@@ -1026,7 +1026,7 @@ static YPR<Block> removePop(
 
 // Add pop(create)
 static YPR<Block> addPopCreate(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -1052,7 +1052,7 @@ static YPR<Block> addPopCreate(
 // Add pop(f()) where f() -> r is a user-defined function.
 // Assumes that f() already exists, if it does not this turns into pop(constant).
 static YPR<Block> addPopUserFunc(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)
@@ -1076,7 +1076,7 @@ static YPR<Block> addPopUserFunc(
 
 // Add function call in another function's body
 static YPR<FunctionDef> addFuncCallInFuncBody(
-	[](FunctionDef* _message, unsigned int _seed)
+	[](FunctionDef* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<FunctionDef>(
 			[](FunctionDef* _message, YulRandomNumGenerator& _rand)
@@ -1095,7 +1095,7 @@ static YPR<FunctionDef> addFuncCallInFuncBody(
 
 // Remove function call from a function's body
 static YPR<FunctionDef> removeFuncCallInFuncBody(
-	[](FunctionDef* _message, unsigned int _seed)
+	[](FunctionDef* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<FunctionDef>(
 			[](FunctionDef* _message, YulRandomNumGenerator&)
@@ -1118,7 +1118,7 @@ static YPR<FunctionDef> removeFuncCallInFuncBody(
 
 // Add dataoffset/datasize
 static YPR<Expression> addDataExpr(
-	[](Expression* _message, unsigned int _seed)
+	[](Expression* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Expression>(
 			[](Expression* _message, YulRandomNumGenerator& _rand)
@@ -1141,7 +1141,7 @@ static YPR<Expression> addDataExpr(
 
 // Add variable reference inside for-loop body
 static YPR<BoundedForStmt> addVarRefInForBody(
-	[](BoundedForStmt* _message, unsigned int _seed)
+	[](BoundedForStmt* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<BoundedForStmt>(
 			[](BoundedForStmt* _message, YulRandomNumGenerator& _rand)
@@ -1160,7 +1160,7 @@ static YPR<BoundedForStmt> addVarRefInForBody(
 
 // Mutate expression to a function call
 static YPR<Expression> mutateExprToFuncCall(
-	[](Expression* _message, unsigned int _seed)
+	[](Expression* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Expression>(
 			[](Expression* _message, YulRandomNumGenerator& _rand)
@@ -1181,7 +1181,7 @@ static YPR<Expression> mutateExprToFuncCall(
 
 // Mutate expression to variable reference
 static YPR<Expression> mutateExprToVarRef(
-	[](Expression* _message, unsigned int _seed)
+	[](Expression* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Expression>(
 			[](Expression* _message, YulRandomNumGenerator& _rand)
@@ -1199,7 +1199,7 @@ static YPR<Expression> mutateExprToVarRef(
 
 // Add varref to statement
 static YPR<Statement> addVarRefToStmt(
-	[](Statement* _message, unsigned int _seed)
+	[](Statement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, YulRandomNumGenerator& _rand)
@@ -1216,7 +1216,7 @@ static YPR<Statement> addVarRefToStmt(
 
 // Add varrefs to unset statement arguments recursively
 static YPR<Statement> addVarRefToStmtRec(
-	[](Statement* _message, unsigned int _seed)
+	[](Statement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, YulRandomNumGenerator& _rand)
@@ -1240,7 +1240,7 @@ static YPR<Statement> addVarRefToStmtRec(
 
 // Add binary operations to unset statement arguments recursively
 static YPR<Statement> addBinopToStmtRec(
-	[](Statement* _message, unsigned int _seed)
+	[](Statement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, YulRandomNumGenerator& _rand)
@@ -1266,7 +1266,7 @@ static YPR<Statement> addBinopToStmtRec(
 
 // Add load operation to unset statement arguments recursively
 static YPR<Statement> addLoadToStmtRec(
-	[](Statement* _message, unsigned int _seed)
+	[](Statement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, YulRandomNumGenerator& _rand)
@@ -1292,7 +1292,7 @@ static YPR<Statement> addLoadToStmtRec(
 
 // Add load from zero location ops to unset statement arguments recursively
 static YPR<Statement> addLoadFromZeroToStmtRec(
-	[](Statement* _message, unsigned int _seed)
+	[](Statement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, YulRandomNumGenerator& _rand)
@@ -1318,7 +1318,7 @@ static YPR<Statement> addLoadFromZeroToStmtRec(
 
 // Add binop expression to statement.
 static YPR<Statement> addBinopToStmt(
-	[](Statement* _message, unsigned int _seed)
+	[](Statement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, YulRandomNumGenerator& _rand)
@@ -1335,7 +1335,7 @@ static YPR<Statement> addBinopToStmt(
 
 // Mutate varref
 static YPR<VarRef> mutateVarRef(
-	[](VarRef* _message, unsigned int _seed)
+	[](VarRef* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<VarRef>(
 			[](VarRef* _message, YulRandomNumGenerator& _rand)
@@ -1352,7 +1352,7 @@ static YPR<VarRef> mutateVarRef(
 
 // Add load expression to statement
 static YPR<Statement> addLoadToStmt(
-	[](Statement* _message, unsigned int _seed)
+	[](Statement* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Statement>(
 			[](Statement* _message, YulRandomNumGenerator& _rand)
@@ -1369,7 +1369,7 @@ static YPR<Statement> addLoadToStmt(
 
 // Add a randomly chosen statement to a statement block
 static YPR<Block> addStmt(
-	[](Block* _message, unsigned int _seed)
+	[](Block* _message, unsigned _seed)
 	{
 		YPM::functionWrapper<Block>(
 			[](Block* _message, YulRandomNumGenerator& _rand)

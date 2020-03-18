@@ -18,7 +18,7 @@ template <typename Proto>
 using LPMPostProcessor = protobuf_mutator::libfuzzer::PostProcessorRegistration<Proto>;
 
 template <typename Proto>
-using FuzzMutatorCallback = std::function<void(Proto*, unsigned int)>;
+using FuzzMutatorCallback = std::function<void(Proto*, unsigned)>;
 
 template <typename P>
 struct YulProtoCBRegistration
@@ -68,8 +68,8 @@ struct YulProtoMutator
 	static void functionWrapper(
 		CustomFuzzMutator<T> const& _callback,
 		T* _message,
-		unsigned int _seed,
-		unsigned int _period,
+		unsigned _seed,
+		unsigned _period,
 		std::string const& _info,
 		PrintChanges _printChanges = PrintChanges::No
 	);
